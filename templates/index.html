@@ -37,7 +37,8 @@ input, textarea { width: 100%; margin-bottom: 12px; padding: 8px 12px; border-ra
   <button class="tab" onclick="show('worries', event)">Worries</button>
   <button class="tab" onclick="show('holidays', event)">Holidays</button>
   <button class="tab" onclick="show('contact', event)">Write to me</button>
-  <button class="tab" onclick="show('game', event)">🍕 Game</button>
+  <button class="tab" onclick="show('game', event)">🎮 Game</button>
+  <button class="tab" onclick="show('song', event)">🎵 Song</button>
 </div>
 
 <div id="letter" class="panel active">
@@ -104,7 +105,47 @@ input, textarea { width: 100%; margin-bottom: 12px; padding: 8px 12px; border-ra
     <button class="send-btn" id="g-btn" onclick="startGame()">Start</button>
   </div>
   <canvas id="g-canvas" style="border-radius:12px; border:0.5px solid #e0e0e0; background:#fff; display:block; width:100%; touch-action:none;"></canvas>
-  <div id="g-msg" style="text-align:center; margin-top:1rem; font-size:15px; color:#888;">Move the tray with your mouse or finger — catch every pizza! 🍕</div>
+  <div id="g-msg" style="text-align:center; margin-top:1rem; font-size:15px; color:#888;">Mueve a las chicas y atrapa todas las banderas 🇮🇹🇪🇸🇩🇪</div>
+</div>
+
+<div id="song" class="panel">
+  <div class="card">
+    <p style="font-size:16px; font-weight:600; margin-bottom:0.25rem">Maria durch ein Dornwald ging</p>
+    <p class="muted" style="margin-bottom:1.25rem">Villancico alemán tradicional</p>
+    <a href="https://www.youtube.com/results?search_query=Maria+durch+ein+Dornwald+ging" target="_blank"
+       style="display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:8px; border:0.5px solid #ccc; font-size:13px; color:#666; text-decoration:none; margin-bottom:1.5rem;">
+      ▶ Escuchar en YouTube
+    </a>
+    <div style="font-family:Georgia,serif; font-size:15px; line-height:2; color:#1a1a1a;">
+      <p style="color:#aaa; font-size:12px; letter-spacing:.05em; text-transform:uppercase; margin-bottom:.5rem">I</p>
+      Maria durch ein Dornwald ging,<br>
+      <em style="color:#888; font-size:13px">Kyrie eleison.</em><br>
+      Maria durch einen Dornwald ging,<br>
+      der hat in sieben Jahr'n kein Laub getragen.<br>
+      <em style="color:#888; font-size:13px">Jesus und Maria.</em>
+
+      <p style="color:#aaa; font-size:12px; letter-spacing:.05em; text-transform:uppercase; margin:1.25rem 0 .5rem">II</p>
+      Was trug Maria unter ihrem Herzen?<br>
+      <em style="color:#888; font-size:13px">Kyrie eleison.</em><br>
+      Ein kleines Kindlein ohne Schmerzen,<br>
+      das trug Maria unter ihrem Herzen.<br>
+      <em style="color:#888; font-size:13px">Jesus und Maria.</em>
+
+      <p style="color:#aaa; font-size:12px; letter-spacing:.05em; text-transform:uppercase; margin:1.25rem 0 .5rem">III</p>
+      Da haben die Dornen Rosen getragen,<br>
+      <em style="color:#888; font-size:13px">Kyrie eleison.</em><br>
+      Als das Kindlein durch den Wald getragen,<br>
+      da haben die Dornen Rosen getragen.<br>
+      <em style="color:#888; font-size:13px">Jesus und Maria.</em>
+
+      <p style="color:#aaa; font-size:12px; letter-spacing:.05em; text-transform:uppercase; margin:1.25rem 0 .5rem">IV</p>
+      Wie soll dem Kind sein Name sein?<br>
+      <em style="color:#888; font-size:13px">Kyrie eleison.</em><br>
+      Der Name, der soll Christus sein,<br>
+      das wird sein aller Seligkeit Schein.<br>
+      <em style="color:#888; font-size:13px">Jesus und Maria.</em>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -118,6 +159,7 @@ var gameResize;
   const msgEl = document.getElementById('g-msg');
   const btn = document.getElementById('g-btn');
 
+  const FLAGS = ['🇮🇹', '🇪🇸', '🇩🇪'];
   let W, H, paddleX, score, lives, pizzas, speed, raf, running, spawnTimer, spawnInterval;
   const PADDLE_W_RATIO = 0.28;
   const PADDLE_H = 52;
@@ -141,7 +183,7 @@ var gameResize;
     ctx.clearRect(0, 0, W, H);
     ctx.font = `${PIZZA_SIZE * 1.5}px serif`;
     ctx.textAlign = 'center';
-    ctx.fillText('🍕', W / 2, H / 2 - 10);
+    ctx.fillText('🇮🇹 🇪🇸 🇩🇪', W / 2, H / 2 - 10);
   }
 
   window.startGame = function() {
@@ -162,7 +204,7 @@ var gameResize;
   function schedulePizza() {
     if (!running) return;
     spawnTimer = setTimeout(() => {
-      pizzas.push({ x: Math.random() * (W - PIZZA_SIZE), y: -PIZZA_SIZE, wobble: (Math.random() - 0.5) * 0.8 });
+      pizzas.push({ x: Math.random() * (W - PIZZA_SIZE), y: -PIZZA_SIZE, wobble: (Math.random() - 0.5) * 0.8, emoji: FLAGS[Math.floor(Math.random() * FLAGS.length)] });
       spawnInterval = Math.max(700, spawnInterval - 18);
       schedulePizza();
     }, spawnInterval);
@@ -231,7 +273,7 @@ var gameResize;
       p.y += speed + score * 0.012;
       p.x += p.wobble;
       p.x = Math.max(0, Math.min(W - PIZZA_SIZE, p.x));
-      ctx.fillText('🍕', p.x, p.y + PIZZA_SIZE);
+      ctx.fillText(p.emoji, p.x, p.y + PIZZA_SIZE);
 
       if (p.y + PIZZA_SIZE >= py && p.y + PIZZA_SIZE <= py + PADDLE_H + speed + 4 &&
           p.x + PIZZA_SIZE * 0.7 > paddleX && p.x + PIZZA_SIZE * 0.3 < paddleX + pw) {
@@ -262,11 +304,11 @@ var gameResize;
     ctx.fillStyle = '#1a1a1a';
     ctx.textAlign = 'center';
     ctx.font = 'bold 22px sans-serif';
-    ctx.fillText('Game over 🍕', W / 2, H / 2 - 18);
+    ctx.fillText('Game over 🇮🇹🇪🇸🇩🇪', W / 2, H / 2 - 18);
     ctx.font = '16px sans-serif';
     ctx.fillStyle = '#666';
-    ctx.fillText('You saved ' + score + ' pizza' + (score !== 1 ? 's' : '') + '!', W / 2, H / 2 + 14);
-    msgEl.textContent = score >= 20 ? '🏆 Pizza champion!' : score >= 10 ? 'Not bad at all!' : 'Try again — Elena believes in you.';
+    ctx.fillText('Atrapaste ' + score + ' bandera' + (score !== 1 ? 's' : '') + '!', W / 2, H / 2 + 14);
+    msgEl.textContent = score >= 20 ? '🏆 Embajadora honoraria!' : score >= 10 ? 'No está nada mal!' : 'Otra vez — Elena puede con todo.';
     btn.textContent = 'Play again';
   }
 
