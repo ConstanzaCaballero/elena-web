@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>For Elena</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+body { background: #fafafa; color: #1a1a1a; }
+.tabs { display: flex; gap: 8px; padding: 1.5rem 1.5rem 0; flex-wrap: wrap; }
+.tab { padding: 8px 16px; border-radius: 8px; border: 0.5px solid #ccc; background: transparent; color: #666; cursor: pointer; font-size: 14px; }
+.tab.active { background: #f0f0f0; color: #1a1a1a; border-color: #999; }
+.panel { display: none; padding: 1.5rem; }
+.panel.active { display: block; }
+.card { background: white; border: 0.5px solid #e0e0e0; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
+.muted { color: #888; font-size: 14px; }
+.big-num { font-size: 48px; font-weight: 500; line-height: 1; }
+.label { font-size: 13px; color: #888; margin-bottom: 4px; }
+.holiday-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 0.5px solid #eee; font-size: 14px; }
+.holiday-row:last-child { border-bottom: none; }
+.badge { font-size: 11px; padding: 3px 8px; border-radius: 8px; background: #e8f0fe; color: #1a56db; }
+.badge-special { background: #e6f4ea; color: #1e7e34; }
+input, textarea { width: 100%; margin-bottom: 12px; padding: 8px 12px; border-radius: 8px; border: 0.5px solid #ccc; font-size: 14px; font-family: sans-serif; resize: vertical; }
+.send-btn { padding: 8px 20px; border-radius: 8px; border: 0.5px solid #ccc; background: transparent; cursor: pointer; font-size: 14px; }
+.send-btn:hover { background: #f0f0f0; }
+.quote { font-family: Georgia, serif; font-size: 18px; line-height: 1.7; border-left: 2px solid #93c5fd; padding-left: 1rem; margin: 1rem 0; }
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.stat-card { background: #f5f5f5; border-radius: 8px; padding: 1rem; }
+</style>
+</head>
+<body>
+
+<div class="tabs">
+  <button class="tab active" onclick="show('letter', event)">For you</button>
+  <button class="tab" onclick="show('days', event)">Dates</button>
+  <button class="tab" onclick="show('worries', event)">Worries</button>
+  <button class="tab" onclick="show('holidays', event)">Holidays</button>
+  <button class="tab" onclick="show('contact', event)">Write to me</button>
+</div>
+
+<div id="letter" class="panel active">
+  <div class="card">
+    <p class="muted" style="margin-bottom: 1rem">A note from Constanza</p>
+    <p class="quote">Hey Elena. If you're reading this, maybe today feels a little heavy, and that's okay. You just came back from an ocean away, started a PhD, landed in a city that isn't yours yet.</p>
+    <p style="margin-top: 1.5rem; font-size:15px; color:#888">With love, Cons 🌿</p>
+  </div>
+</div>
+
+<div id="days" class="panel">
+  <div class="stat-grid">
+    <div class="stat-card">
+      <p class="label">Days until Elena's birthday</p>
+      <p class="big-num" id="elena-bday">—</p>
+      <p class="muted" style="margin-top:4px">October 16</p>
+    </div>
+    <div class="stat-card">
+      <p class="label">Days until Constanza's birthday</p>
+      <p class="big-num" id="cons-bday">—</p>
+      <p class="muted" style="margin-top:4px">May 31</p>
+    </div>
+  </div>
+</div>
+
+<div id="worries" class="panel">
+  <div class="card">
+    <p style="font-size:15px; font-weight:500; margin-bottom:0.75rem">How often do your worst fears actually come true?</p>
+    <p class="muted" style="margin-bottom:1rem">Think of something that's been keeping you up. How many times this month did you worry about it?</p>
+    <label class="label">Times worried this month</label>
+    <input type="number" id="worry-count" placeholder="e.g. 15" min="0" />
+    <label class="label">Times it actually happened</label>
+    <input type="number" id="worry-real" placeholder="e.g. 1" min="0" />
+    <button class="send-btn" onclick="calcWorry()" style="margin-top:4px">Calculate</button>
+    <div id="worry-result" style="margin-top:1rem; display:none">
+      <p style="font-size:15px; font-weight:500" id="worry-text"></p>
+      <p class="muted" style="margin-top:4px">Research shows over 85% of worries never materialize — and when they do, people handle them better than expected.</p>
+    </div>
+  </div>
+</div>
+
+<div id="holidays" class="panel">
+  <p class="muted" style="margin-bottom:1rem">Public holidays in Baden-Württemberg 2026</p>
+  <div class="card" style="padding: 0.5rem 1.25rem" id="holiday-list"></div>
+</div>
+
+<div id="contact" class="panel">
+  <div class="card">
+    <p style="font-size:15px; font-weight:500; margin-bottom:0.75rem">Write something to Constanza</p>
+    <p class="muted" style="margin-bottom:1rem">She'd love to hear from you, whenever.</p>
+    <label class="label">Your message</label>
+    <textarea rows="5" placeholder="Hey Cons..."></textarea>
+    <button class="send-btn">Send</button>
+  </div>
+</div>
+
+<script>
+function show(id, e) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  e.target.classList.add('active');
+}
+function daysUntil(month, day) {
+  const now = new Date();
+  let target = new Date(now.getFullYear(), month - 1, day);
+  if (target <= now) target.setFullYear(now.getFullYear() + 1);
+  return Math.ceil((target - now) / (1000 * 60 * 60 * 24));
+}
+document.getElementById('elena-bday').textContent = daysUntil(10, 16);
+document.getElementById('cons-bday').textContent = daysUntil(5, 31);
+function calcWorry() {
+  const total = parseInt(document.getElementById('worry-count').value) || 0;
+  const real = parseInt(document.getElementById('worry-real').value) || 0;
+  const pct = total > 0 ? Math.round((real / total) * 100) : 0;
+  const txt = document.getElementById('worry-text');
+  txt.textContent = total === 0 ? 'Enter how many times you worried first.' : `${pct}% of your worries came true. ${pct < 20 ? 'That means ' + (100 - pct) + '% were your mind protecting you — not reality.' : 'Even so, you handled every single one.'}`;
+  document.getElementById('worry-result').style.display = 'block';
+}
+const holidays = [
+  {date:'2026-01-01',name:'New Year'},{date:'2026-01-06',name:'Epiphany'},
+  {date:'2026-04-03',name:'Good Friday'},{date:'2026-04-06',name:'Easter Monday'},
+  {date:'2026-05-01',name:'Labour Day'},{date:'2026-05-14',name:'Ascension'},
+  {date:'2026-05-25',name:'Whit Monday'},{date:'2026-06-04',name:'Corpus Christi'},
+  {date:'2026-10-03',name:'German Unity Day'},{date:'2026-11-01',name:'All Saints Day'},
+  {date:'2026-12-25',name:'Christmas Day'},{date:'2026-12-26',name:'Boxing Day'},
+  {date:'2026-05-31',name:"Constanza's birthday"},{date:'2026-10-16',name:"Elena's birthday"}
+].sort((a,b)=>a.date.localeCompare(b.date));
+const specials = ['2026-05-31','2026-10-16'];
+const list = document.getElementById('holiday-list');
+const now = new Date();
+holidays.forEach(h => {
+  const d = new Date(h.date);
+  const isPast = d < now;
+  const days = Math.ceil((d - now) / (1000*60*60*24));
+  const isSpecial = specials.includes(h.date);
+  const row = document.createElement('div');
+  row.className = 'holiday-row';
+  row.style.opacity = isPast ? '0.4' : '1';
+  row.innerHTML = `<span>${h.name} ${isSpecial ? '<span class="badge badge-special">special</span>' : ''}</span><span style="display:flex;gap:8px;align-items:center"><span class="muted">${d.toLocaleDateString('en-DE',{day:'numeric',month:'short'})}</span>${!isPast?'<span class="badge">'+days+'d</span>':''}</span>`;
+  list.appendChild(row);
+});
+</script>
+</body>
+</html>
