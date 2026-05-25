@@ -37,6 +37,7 @@ input, textarea { width: 100%; margin-bottom: 12px; padding: 8px 12px; border-ra
   <button class="tab" onclick="show('worries', event)">Worries</button>
   <button class="tab" onclick="show('holidays', event)">Holidays</button>
   <button class="tab" onclick="show('contact', event)">Write to me</button>
+  <button class="tab" onclick="show('game', event)">🍕 Game</button>
 </div>
 
 <div id="letter" class="panel active">
@@ -93,7 +94,159 @@ input, textarea { width: 100%; margin-bottom: 12px; padding: 8px 12px; border-ra
   </div>
 </div>
 
+<div id="game" class="panel" style="padding: 1rem;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+    <div>
+      <span style="font-size:13px; color:#888;">Score: </span><span id="g-score" style="font-weight:600;">0</span>
+      &nbsp;&nbsp;
+      <span style="font-size:13px; color:#888;">Lives: </span><span id="g-lives">❤️❤️❤️</span>
+    </div>
+    <button class="send-btn" id="g-btn" onclick="startGame()">Start</button>
+  </div>
+  <canvas id="g-canvas" style="border-radius:12px; border:0.5px solid #e0e0e0; background:#fff; display:block; width:100%; touch-action:none;"></canvas>
+  <div id="g-msg" style="text-align:center; margin-top:1rem; font-size:15px; color:#888;">Move the tray with your mouse or finger — catch every pizza! 🍕</div>
+</div>
+
 <script>
+// ── Pizza Catch Game ──────────────────────────────────────────────
+(function() {
+  const canvas = document.getElementById('g-canvas');
+  const ctx = canvas.getContext('2d');
+  const scoreEl = document.getElementById('g-score');
+  const livesEl = document.getElementById('g-lives');
+  const msgEl = document.getElementById('g-msg');
+  const btn = document.getElementById('g-btn');
+
+  let W, H, paddleX, score, lives, pizzas, speed, raf, running, spawnTimer, spawnInterval;
+  const PADDLE_W_RATIO = 0.22;
+  const PADDLE_H = 14;
+  const PIZZA_SIZE = 28;
+
+  function resize() {
+    const rect = canvas.parentElement.getBoundingClientRect();
+    W = Math.floor(rect.width - 2);
+    H = Math.min(420, Math.floor(W * 1.1));
+    canvas.width = W;
+    canvas.height = H;
+    canvas.style.height = H + 'px';
+    if (!running) drawIdle();
+  }
+
+  function paddleW() { return Math.floor(W * PADDLE_W_RATIO); }
+
+  function drawIdle() {
+    ctx.clearRect(0, 0, W, H);
+    ctx.font = `${PIZZA_SIZE * 1.5}px serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('🍕', W / 2, H / 2 - 10);
+  }
+
+  function startGame() {
+    if (raf) cancelAnimationFrame(raf);
+    clearTimeout(spawnTimer);
+    paddleX = W / 2 - paddleW() / 2;
+    score = 0; lives = 3; pizzas = []; speed = H * 0.003; spawnInterval = 1600;
+    scoreEl.textContent = 0;
+    livesEl.textContent = '❤️❤️❤️';
+    msgEl.textContent = '';
+    btn.textContent = 'Restart';
+    running = true;
+    schedulePizza();
+    raf = requestAnimationFrame(loop);
+  }
+
+  function schedulePizza() {
+    if (!running) return;
+    spawnTimer = setTimeout(() => {
+      pizzas.push({ x: Math.random() * (W - PIZZA_SIZE), y: -PIZZA_SIZE, wobble: (Math.random() - 0.5) * 0.8 });
+      spawnInterval = Math.max(700, spawnInterval - 18);
+      schedulePizza();
+    }, spawnInterval);
+  }
+
+  function loop() {
+    if (!running) return;
+    ctx.clearRect(0, 0, W, H);
+
+    // draw paddle
+    const pw = paddleW();
+    const py = H - PADDLE_H - 10;
+    ctx.fillStyle = '#1a1a1a';
+    ctx.beginPath();
+    ctx.roundRect(paddleX, py, pw, PADDLE_H, 7);
+    ctx.fill();
+
+    // update & draw pizzas
+    ctx.font = `${PIZZA_SIZE}px serif`;
+    ctx.textAlign = 'left';
+    for (let i = pizzas.length - 1; i >= 0; i--) {
+      const p = pizzas[i];
+      p.y += speed + score * 0.012;
+      p.x += p.wobble;
+      p.x = Math.max(0, Math.min(W - PIZZA_SIZE, p.x));
+      ctx.fillText('🍕', p.x, p.y + PIZZA_SIZE);
+
+      // caught
+      if (p.y + PIZZA_SIZE >= py && p.y + PIZZA_SIZE <= py + PADDLE_H + speed + 4 &&
+          p.x + PIZZA_SIZE * 0.7 > paddleX && p.x + PIZZA_SIZE * 0.3 < paddleX + pw) {
+        pizzas.splice(i, 1);
+        score++;
+        scoreEl.textContent = score;
+        if (score % 8 === 0) speed = Math.min(speed * 1.18, H * 0.018);
+        continue;
+      }
+
+      // missed
+      if (p.y > H + 10) {
+        pizzas.splice(i, 1);
+        lives--;
+        const hearts = ['', '❤️', '❤️❤️', '❤️❤️❤️'];
+        livesEl.textContent = lives > 0 ? hearts[lives] : '💔';
+        if (lives <= 0) { gameOver(); return; }
+      }
+    }
+
+    raf = requestAnimationFrame(loop);
+  }
+
+  function gameOver() {
+    running = false;
+    clearTimeout(spawnTimer);
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#1a1a1a';
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 22px sans-serif';
+    ctx.fillText('Game over 🍕', W / 2, H / 2 - 18);
+    ctx.font = '16px sans-serif';
+    ctx.fillStyle = '#666';
+    ctx.fillText(`You saved ${score} pizza${score !== 1 ? 's' : ''}!`, W / 2, H / 2 + 14);
+    msgEl.textContent = score >= 20 ? '🏆 Pizza champion!' : score >= 10 ? 'Not bad at all!' : 'Try again — Elena believes in you.';
+    btn.textContent = 'Play again';
+  }
+
+  // mouse
+  canvas.addEventListener('mousemove', e => {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = W / rect.width;
+    paddleX = (e.clientX - rect.left) * scaleX - paddleW() / 2;
+    paddleX = Math.max(0, Math.min(W - paddleW(), paddleX));
+  });
+
+  // touch
+  canvas.addEventListener('touchmove', e => {
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = W / rect.width;
+    paddleX = (e.touches[0].clientX - rect.left) * scaleX - paddleW() / 2;
+    paddleX = Math.max(0, Math.min(W - paddleW(), paddleX));
+  }, { passive: false });
+
+  window.addEventListener('resize', resize);
+  resize();
+})();
+// ─────────────────────────────────────────────────────────────────
+
 function show(id, e) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
