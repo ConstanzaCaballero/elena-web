@@ -109,6 +109,7 @@ input, textarea { width: 100%; margin-bottom: 12px; padding: 8px 12px; border-ra
 
 <script>
 // ── Pizza Catch Game ──────────────────────────────────────────────
+var gameResize;
 (function() {
   const canvas = document.getElementById('g-canvas');
   const ctx = canvas.getContext('2d');
@@ -123,14 +124,16 @@ input, textarea { width: 100%; margin-bottom: 12px; padding: 8px 12px; border-ra
   const PIZZA_SIZE = 28;
 
   function resize() {
-    const rect = canvas.parentElement.getBoundingClientRect();
-    W = Math.floor(rect.width - 2);
+    const panel = document.getElementById('game');
+    W = Math.floor(panel.clientWidth - 32);
+    if (W <= 0) return;
     H = Math.min(420, Math.floor(W * 1.1));
     canvas.width = W;
     canvas.height = H;
     canvas.style.height = H + 'px';
     if (!running) drawIdle();
   }
+  gameResize = resize;
 
   function paddleW() { return Math.floor(W * PADDLE_W_RATIO); }
 
@@ -141,7 +144,8 @@ input, textarea { width: 100%; margin-bottom: 12px; padding: 8px 12px; border-ra
     ctx.fillText('🍕', W / 2, H / 2 - 10);
   }
 
-  function startGame() {
+  window.startGame = function() {
+    resize();
     if (raf) cancelAnimationFrame(raf);
     clearTimeout(spawnTimer);
     paddleX = W / 2 - paddleW() / 2;
@@ -153,7 +157,7 @@ input, textarea { width: 100%; margin-bottom: 12px; padding: 8px 12px; border-ra
     running = true;
     schedulePizza();
     raf = requestAnimationFrame(loop);
-  }
+  };
 
   function schedulePizza() {
     if (!running) return;
@@ -164,19 +168,30 @@ input, textarea { width: 100%; margin-bottom: 12px; padding: 8px 12px; border-ra
     }, spawnInterval);
   }
 
+  function roundRect(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.arcTo(x + w, y, x + w, y + r, r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+    ctx.lineTo(x + r, y + h);
+    ctx.arcTo(x, y + h, x, y + h - r, r);
+    ctx.lineTo(x, y + r);
+    ctx.arcTo(x, y, x + r, y, r);
+    ctx.closePath();
+  }
+
   function loop() {
     if (!running) return;
     ctx.clearRect(0, 0, W, H);
 
-    // draw paddle
     const pw = paddleW();
     const py = H - PADDLE_H - 10;
     ctx.fillStyle = '#1a1a1a';
-    ctx.beginPath();
-    ctx.roundRect(paddleX, py, pw, PADDLE_H, 7);
+    roundRect(paddleX, py, pw, PADDLE_H, 7);
     ctx.fill();
 
-    // update & draw pizzas
     ctx.font = `${PIZZA_SIZE}px serif`;
     ctx.textAlign = 'left';
     for (let i = pizzas.length - 1; i >= 0; i--) {
@@ -186,7 +201,6 @@ input, textarea { width: 100%; margin-bottom: 12px; padding: 8px 12px; border-ra
       p.x = Math.max(0, Math.min(W - PIZZA_SIZE, p.x));
       ctx.fillText('🍕', p.x, p.y + PIZZA_SIZE);
 
-      // caught
       if (p.y + PIZZA_SIZE >= py && p.y + PIZZA_SIZE <= py + PADDLE_H + speed + 4 &&
           p.x + PIZZA_SIZE * 0.7 > paddleX && p.x + PIZZA_SIZE * 0.3 < paddleX + pw) {
         pizzas.splice(i, 1);
@@ -196,7 +210,6 @@ input, textarea { width: 100%; margin-bottom: 12px; padding: 8px 12px; border-ra
         continue;
       }
 
-      // missed
       if (p.y > H + 10) {
         pizzas.splice(i, 1);
         lives--;
@@ -220,21 +233,19 @@ input, textarea { width: 100%; margin-bottom: 12px; padding: 8px 12px; border-ra
     ctx.fillText('Game over 🍕', W / 2, H / 2 - 18);
     ctx.font = '16px sans-serif';
     ctx.fillStyle = '#666';
-    ctx.fillText(`You saved ${score} pizza${score !== 1 ? 's' : ''}!`, W / 2, H / 2 + 14);
+    ctx.fillText('You saved ' + score + ' pizza' + (score !== 1 ? 's' : '') + '!', W / 2, H / 2 + 14);
     msgEl.textContent = score >= 20 ? '🏆 Pizza champion!' : score >= 10 ? 'Not bad at all!' : 'Try again — Elena believes in you.';
     btn.textContent = 'Play again';
   }
 
-  // mouse
-  canvas.addEventListener('mousemove', e => {
+  canvas.addEventListener('mousemove', function(e) {
     const rect = canvas.getBoundingClientRect();
     const scaleX = W / rect.width;
     paddleX = (e.clientX - rect.left) * scaleX - paddleW() / 2;
     paddleX = Math.max(0, Math.min(W - paddleW(), paddleX));
   });
 
-  // touch
-  canvas.addEventListener('touchmove', e => {
+  canvas.addEventListener('touchmove', function(e) {
     e.preventDefault();
     const rect = canvas.getBoundingClientRect();
     const scaleX = W / rect.width;
@@ -243,7 +254,6 @@ input, textarea { width: 100%; margin-bottom: 12px; padding: 8px 12px; border-ra
   }, { passive: false });
 
   window.addEventListener('resize', resize);
-  resize();
 })();
 // ─────────────────────────────────────────────────────────────────
 
@@ -252,6 +262,7 @@ function show(id, e) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   e.target.classList.add('active');
+  if (id === 'game' && typeof gameResize === 'function') gameResize();
 }
 function daysUntil(month, day) {
   const now = new Date();
