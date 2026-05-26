@@ -97,7 +97,7 @@ input, textarea { width: 100%; margin-bottom: 12px; padding: 8px 12px; border-ra
     <button class="send-btn" id="g-btn" onclick="startGame()">Start</button>
   </div>
   <canvas id="g-canvas" style="border-radius:12px; border:0.5px solid #e0e0e0; background:#fff; display:block; width:100%; touch-action:none;"></canvas>
-  <div id="g-msg" style="text-align:center; margin-top:1rem; font-size:15px; color:#888;">Atrapa todo 🍕🍜🥨☕🇮🇹🇪🇸🇩🇪🇰🇷 — huye del 🦠</div>
+  <div id="g-msg" style="text-align:center; margin-top:1rem; font-size:15px; color:#888;">Atrapa todo 🍕🍜🥨☕🇮🇹🇪🇸🇩🇪🇰🇷 — huye del 🦠 y las 🐦</div>
 </div>
 
 <div id="song" class="panel">
@@ -165,7 +165,8 @@ var gameResize;
   const ITEMS = [
     {e:'🇮🇹'},{e:'🇪🇸'},{e:'🇩🇪'},{e:'🇰🇷'},
     {e:'🍕'},{e:'☕'},{e:'🍜'},{e:'🥨'},
-    {e:'🦠',deadly:true},{e:'🦠',deadly:true}
+    {e:'🦠',deadly:true},{e:'🦠',deadly:true},
+    {e:'🐦',pigeon:true},{e:'🐦',pigeon:true}
   ];
   let W, H, paddleX, score, lives, pizzas, speed, raf, running, spawnTimer, spawnInterval, girlCount;
   const GIRL_W = 0.075;
@@ -291,6 +292,12 @@ var gameResize;
           p.x + PIZZA_SIZE * 0.7 > paddleX && p.x + PIZZA_SIZE * 0.3 < paddleX + pw) {
         pizzas.splice(i, 1);
         if (p.deadly) { lives = 0; livesEl.textContent = '💀'; gameOver(); return; }
+        if (p.pigeon) {
+          girlCount--;
+          if (girlCount <= 0) { lives = 0; livesEl.textContent = '💀'; gameOver(); return; }
+          paddleX = Math.min(paddleX, W - paddleW());
+          continue;
+        }
         score++;
         scoreEl.textContent = score;
         speed = Math.min(speed + H * 0.0005, H * 0.045);
