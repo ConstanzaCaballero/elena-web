@@ -218,7 +218,7 @@ var gameResize;
     if (!running) return;
     spawnTimer = setTimeout(() => {
       const item = ITEMS[Math.floor(Math.random() * ITEMS.length)];
-      pizzas.push({ x: Math.random() * (W - PIZZA_SIZE), y: -PIZZA_SIZE, wobble: (Math.random() - 0.5) * 0.9, emoji: item.e, deadly: !!item.deadly });
+      pizzas.push({ x: Math.random() * (W - PIZZA_SIZE), y: -PIZZA_SIZE, wobble: (Math.random() - 0.5) * 0.9, emoji: item.e, deadly: !!item.deadly, pigeon: !!item.pigeon });
       spawnInterval = Math.max(400, spawnInterval - 22);
       schedulePizza();
     }, spawnInterval);
@@ -293,6 +293,7 @@ var gameResize;
         pizzas.splice(i, 1);
         if (p.deadly) { lives = 0; livesEl.textContent = '💀'; gameOver(); return; }
         if (p.pigeon) {
+          pizzas.splice(i, 1);
           girlCount--;
           if (girlCount <= 0) { lives = 0; livesEl.textContent = '💀'; gameOver(); return; }
           paddleX = Math.min(paddleX, W - paddleW());
