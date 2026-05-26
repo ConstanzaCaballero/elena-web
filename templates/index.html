@@ -203,8 +203,8 @@ var gameResize;
     {e:'🍕'},{e:'☕'},{e:'🍜'},{e:'🥨'},
     {e:'🦠',deadly:true},{e:'🦠',deadly:true}
   ];
-  let W, H, paddleX, score, lives, pizzas, speed, raf, running, spawnTimer, spawnInterval;
-  const PADDLE_W_RATIO = 0.28;
+  let W, H, paddleX, score, lives, pizzas, speed, raf, running, spawnTimer, spawnInterval, girlCount;
+  const GIRL_W = 0.075;
   const PADDLE_H = 52;
   const PIZZA_SIZE = 28;
 
@@ -220,7 +220,7 @@ var gameResize;
   }
   gameResize = resize;
 
-  function paddleW() { return Math.floor(W * PADDLE_W_RATIO); }
+  function paddleW() { return Math.floor(W * GIRL_W * girlCount); }
 
   function drawIdle() {
     ctx.clearRect(0, 0, W, H);
@@ -238,7 +238,7 @@ var gameResize;
     if (raf) cancelAnimationFrame(raf);
     clearTimeout(spawnTimer);
     paddleX = W / 2 - paddleW() / 2;
-    score = 0; lives = 3; pizzas = []; speed = H * 0.007; spawnInterval = 1000;
+    score = 0; lives = 3; pizzas = []; speed = H * 0.007; spawnInterval = 1000; girlCount = 1;
     scoreEl.textContent = 0;
     livesEl.textContent = '❤️❤️❤️';
     msgEl.textContent = '';
@@ -258,8 +258,7 @@ var gameResize;
     }, spawnInterval);
   }
 
-  function drawGirls(x, topY, totalW, totalH) {
-    const n = 4;
+  function drawGirls(x, topY, totalW, totalH, n) {
     const figW = totalW / n;
     const headR = Math.min(figW * 0.17, totalH * 0.2);
     const feetY = topY + totalH;
@@ -312,7 +311,7 @@ var gameResize;
 
     const pw = paddleW();
     const py = H - PADDLE_H - 10;
-    drawGirls(paddleX, py, pw, PADDLE_H);
+    drawGirls(paddleX, py, pw, PADDLE_H, girlCount);
 
     ctx.font = `${PIZZA_SIZE}px serif`;
     ctx.textAlign = 'left';
@@ -330,6 +329,10 @@ var gameResize;
         score++;
         scoreEl.textContent = score;
         speed = Math.min(speed + H * 0.0005, H * 0.045);
+        if (score % 3 === 0 && girlCount < 5) {
+          girlCount++;
+          paddleX = Math.min(paddleX, W - paddleW());
+        }
         continue;
       }
 
