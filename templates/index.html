@@ -37,7 +37,6 @@ input, textarea { width: 100%; margin-bottom: 12px; padding: 8px 12px; border-ra
   <button class="tab" onclick="show('days', event)">Dates</button>
   <button class="tab" onclick="show('worries', event)">Worries</button>
   <button class="tab" onclick="show('holidays', event)">Holidays</button>
-  <button class="tab" onclick="show('contact', event)">Write to me</button>
   <button class="tab" onclick="show('game', event)">🎮 Game</button>
   <button class="tab" onclick="show('song', event)">🎵 Song</button>
   <button class="tab" onclick="show('map', event)">📍 Ulm</button>
@@ -88,15 +87,6 @@ input, textarea { width: 100%; margin-bottom: 12px; padding: 8px 12px; border-ra
   <div class="card" style="padding: 0.5rem 1.25rem" id="holiday-list"></div>
 </div>
 
-<div id="contact" class="panel">
-  <div class="card">
-    <p style="font-size:15px; font-weight:500; margin-bottom:0.75rem">Write something to Constanza</p>
-    <p class="muted" style="margin-bottom:1rem">She'd love to hear from you, whenever.</p>
-    <label class="label">Your message</label>
-    <textarea rows="5" placeholder="Hey Cons..."></textarea>
-    <button class="send-btn">Send</button>
-  </div>
-</div>
 
 <div id="game" class="panel" style="padding: 1rem;">
   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
@@ -237,8 +227,9 @@ var gameResize;
     resize();
     if (raf) cancelAnimationFrame(raf);
     clearTimeout(spawnTimer);
+    girlCount = 1;
     paddleX = W / 2 - paddleW() / 2;
-    score = 0; lives = 3; pizzas = []; speed = H * 0.007; spawnInterval = 1000; girlCount = 1;
+    score = 0; lives = 3; pizzas = []; speed = H * 0.007; spawnInterval = 1000;
     scoreEl.textContent = 0;
     livesEl.textContent = '❤️❤️❤️';
     msgEl.textContent = '';
