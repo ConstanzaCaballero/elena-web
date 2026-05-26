@@ -176,12 +176,13 @@ var gameResize;
     {e:'🍄',mushroom:true},{e:'🍄',mushroom:true},
     {e:'📚',libro:true},{e:'📚',libro:true},
     {e:'🏔️',mountain:true},{e:'🏔️',mountain:true},
-    {e:'💣',bomb:true},{e:'💣',bomb:true},
-    {e:'⏰',clock:true},{e:'⏰',clock:true}
+    {e:'⏰',clock:true},{e:'⏰',clock:true},
+    {e:'🧲',magnet:true},{e:'🧲',magnet:true},
+    {e:'🌈',rainbow:true},{e:'🌈',rainbow:true}
   ];
   let W, H, paddleX, score, lives, pizzas, shots, speed, raf, running, spawnTimer, spawnInterval, girlCount;
   let darkUntil = 0, shakeUntil = 0, cloudUntil = 0, shrinkUntil = 0, growUntil = 0;
-  let gradUntil = 0, mountainUntil = 0, flashUntil = 0, slowUntil = 0;
+  let gradUntil = 0, mountainUntil = 0, slowUntil = 0, magnetUntil = 0, rainbowUntil = 0;
   const GIRL_W = 0.075;
   const PADDLE_H = 52;
   const PIZZA_SIZE = 28;
@@ -219,7 +220,7 @@ var gameResize;
     paddleX = W / 2 - paddleW() / 2;
     score = 0; lives = 3; pizzas = []; shots = []; speed = H * 0.007; spawnInterval = 1000;
     darkUntil = 0; shakeUntil = 0; cloudUntil = 0; shrinkUntil = 0; growUntil = 0;
-    gradUntil = 0; mountainUntil = 0; flashUntil = 0; slowUntil = 0;
+    gradUntil = 0; mountainUntil = 0; slowUntil = 0; magnetUntil = 0; rainbowUntil = 0;
     scoreEl.textContent = 0;
     livesEl.textContent = '❤️❤️❤️';
     msgEl.textContent = '';
@@ -233,7 +234,7 @@ var gameResize;
     if (!running) return;
     spawnTimer = setTimeout(() => {
       const item = ITEMS[Math.floor(Math.random() * ITEMS.length)];
-      pizzas.push({ x: Math.random() * (W - PIZZA_SIZE), y: -PIZZA_SIZE, wobble: (Math.random() - 0.5) * 0.9, emoji: item.e, deadly: !!item.deadly, pigeon: !!item.pigeon, heart: !!item.heart, aperol: !!item.aperol, moon: !!item.moon, thunder: !!item.thunder, cloud: !!item.cloud, brownie: !!item.brownie, mushroom: !!item.mushroom, libro: !!item.libro, mountain: !!item.mountain, bomb: !!item.bomb, clock: !!item.clock });
+      pizzas.push({ x: Math.random() * (W - PIZZA_SIZE), y: -PIZZA_SIZE, wobble: (Math.random() - 0.5) * 0.9, emoji: item.e, deadly: !!item.deadly, pigeon: !!item.pigeon, heart: !!item.heart, aperol: !!item.aperol, moon: !!item.moon, thunder: !!item.thunder, cloud: !!item.cloud, brownie: !!item.brownie, mushroom: !!item.mushroom, libro: !!item.libro, mountain: !!item.mountain, clock: !!item.clock, magnet: !!item.magnet, rainbow: !!item.rainbow });
       spawnInterval = Math.max(400, spawnInterval - 22);
       schedulePizza();
     }, spawnInterval);
@@ -295,7 +296,7 @@ var gameResize;
   }
 
   function isEffect(p) {
-    return p.deadly || p.pigeon || p.heart || p.aperol || p.moon || p.thunder || p.cloud || p.brownie || p.mushroom || p.libro || p.mountain || p.bomb || p.clock;
+    return p.deadly || p.pigeon || p.heart || p.aperol || p.moon || p.thunder || p.cloud || p.brownie || p.mushroom || p.libro || p.mountain || p.clock || p.magnet || p.rainbow;
   }
 
   function inMountain(px, py_item, mX, mBaseY, mH, mHW) {
@@ -310,8 +311,8 @@ var gameResize;
     const isShaking   = now < shakeUntil;
     const isDark      = now < darkUntil;
     const isCloudy    = now < cloudUntil;
-    const isFlash     = now < flashUntil;
     const isSlow      = now < slowUntil;
+    const isRainbow   = now < rainbowUntil;
     const hasMountain = now < mountainUntil;
     const isGrad      = now < gradUntil;
     const speedMult   = isSlow ? 0.3 : 1.0;
@@ -353,7 +354,18 @@ var gameResize;
       p.y += (speed + score * 0.012) * speedMult;
       p.x += p.wobble * speedMult;
       p.x = Math.max(0, Math.min(W - PIZZA_SIZE, p.x));
-      ctx.fillText(p.emoji, p.x, p.y + PIZZA_SIZE);
+      if (now < magnetUntil) {
+        const targetX = paddleX + pw / 2 - PIZZA_SIZE / 2;
+        p.x += (targetX - p.x) * 0.08;
+      }
+      if (isRainbow) {
+        const sz = PIZZA_SIZE * (0.6 + Math.random() * 1.0);
+        ctx.font = `${sz}px serif`;
+        ctx.fillText(p.emoji, p.x, p.y + sz);
+        ctx.font = `${PIZZA_SIZE}px serif`;
+      } else {
+        ctx.fillText(p.emoji, p.x, p.y + PIZZA_SIZE);
+      }
 
       // mountain collision
       if (hasMountain && inMountain(p.x + PIZZA_SIZE * 0.5, p.y + PIZZA_SIZE * 0.5, mX, mBaseY, mH, mHW)) {
@@ -384,8 +396,9 @@ var gameResize;
         } else if (p.mushroom) { growUntil    = Date.now() + 2000; shrinkUntil = 0;
         } else if (p.libro)    { gradUntil    = Date.now() + 3000;
         } else if (p.mountain) { mountainUntil = Date.now() + 5000;
-        } else if (p.bomb)     { pizzas = []; shots = []; flashUntil = Date.now() + 200;
         } else if (p.clock)    { slowUntil    = Date.now() + 2000;
+        } else if (p.magnet)   { magnetUntil  = Date.now() + 2000;
+        } else if (p.rainbow)  { rainbowUntil = Date.now() + 2000;
         } else {
           score++;
           scoreEl.textContent = score;
@@ -439,7 +452,6 @@ var gameResize;
     // ── overlays ──
     if (isDark)   { ctx.fillStyle = 'rgba(0,0,20,0.82)';      ctx.fillRect(0,0,W,H); }
     if (isCloudy) { ctx.fillStyle = 'rgba(190,190,190,0.55)';  ctx.fillRect(0,0,W,H); }
-    if (isFlash)  { ctx.fillStyle = 'rgba(255,220,50,0.7)';    ctx.fillRect(0,0,W,H); }
     if (isSlow)   {
       ctx.fillStyle = 'rgba(100,180,255,0.18)';
       ctx.fillRect(0,0,W,H);
