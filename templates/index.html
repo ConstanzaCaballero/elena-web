@@ -289,30 +289,29 @@ var gameResize;
       p.x = Math.max(0, Math.min(W - PIZZA_SIZE, p.x));
       ctx.fillText(p.emoji, p.x, p.y + PIZZA_SIZE);
 
-      if (p.y + PIZZA_SIZE >= py && p.y + PIZZA_SIZE <= py + PADDLE_H + speed + 4 &&
-          p.x + PIZZA_SIZE * 0.7 > paddleX && p.x + PIZZA_SIZE * 0.3 < paddleX + pw) {
+      const HEARTS = ['', '❤️', '❤️❤️', '❤️❤️❤️'];
+      const caught = p.y + PIZZA_SIZE >= py && p.y + PIZZA_SIZE <= py + PADDLE_H + speed + 4 &&
+                     p.x + PIZZA_SIZE * 0.7 > paddleX && p.x + PIZZA_SIZE * 0.3 < paddleX + pw;
+
+      if (caught) {
         pizzas.splice(i, 1);
-        if (p.deadly) { lives = 0; livesEl.textContent = '💀'; gameOver(); return; }
-        if (p.heart) {
-          pizzas.splice(i, 1);
-          lives = Math.min(lives + 1, 3);
-          const hearts = ['', '❤️', '❤️❤️', '❤️❤️❤️'];
-          livesEl.textContent = hearts[lives];
-          continue;
-        }
-        if (p.pigeon) {
-          pizzas.splice(i, 1);
+        if (p.deadly) {
+          lives = 0; livesEl.textContent = '💀'; gameOver(); return;
+        } else if (p.pigeon) {
           girlCount--;
           if (girlCount <= 0) { lives = 0; livesEl.textContent = '💀'; gameOver(); return; }
           paddleX = Math.min(paddleX, W - paddleW());
-          continue;
-        }
-        score++;
-        scoreEl.textContent = score;
-        speed = Math.min(speed + H * 0.0005, H * 0.045);
-        if (score % 3 === 0 && girlCount < 5) {
-          girlCount++;
-          paddleX = Math.min(paddleX, W - paddleW());
+        } else if (p.heart) {
+          lives = Math.min(lives + 1, 3);
+          livesEl.textContent = HEARTS[lives];
+        } else {
+          score++;
+          scoreEl.textContent = score;
+          speed = Math.min(speed + H * 0.0005, H * 0.045);
+          if (score % 3 === 0 && girlCount < 5) {
+            girlCount++;
+            paddleX = Math.min(paddleX, W - paddleW());
+          }
         }
         continue;
       }
@@ -321,8 +320,7 @@ var gameResize;
         pizzas.splice(i, 1);
         if (!p.deadly && !p.pigeon && !p.heart) {
           lives--;
-          const hearts = ['', '❤️', '❤️❤️', '❤️❤️❤️'];
-          livesEl.textContent = lives > 0 ? hearts[lives] : '💔';
+          livesEl.textContent = lives > 0 ? HEARTS[lives] : '💔';
           if (lives <= 0) { gameOver(); return; }
         }
       }
