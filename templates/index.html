@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>For Elena</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
 body { background: #fafafa; color: #1a1a1a; }
@@ -107,7 +108,7 @@ input, textarea { width: 100%; margin-bottom: 12px; padding: 8px 12px; border-ra
     <button class="send-btn" id="g-btn" onclick="startGame()">Start</button>
   </div>
   <canvas id="g-canvas" style="border-radius:12px; border:0.5px solid #e0e0e0; background:#fff; display:block; width:100%; touch-action:none;"></canvas>
-  <div id="g-msg" style="text-align:center; margin-top:1rem; font-size:15px; color:#888;">Mueve a las chicas y atrapa todo 🇮🇹🇪🇸🇩🇪🇰🇷🍕☕</div>
+  <div id="g-msg" style="text-align:center; margin-top:1rem; font-size:15px; color:#888;">Atrapa todo 🍕🍜🥨☕🇮🇹🇪🇸🇩🇪🇰🇷 — huye del 🦠</div>
 </div>
 
 <div id="song" class="panel">
@@ -151,14 +152,12 @@ input, textarea { width: 100%; margin-bottom: 12px; padding: 8px 12px; border-ra
 
 <div id="map" class="panel">
   <p class="muted" style="margin-bottom:1rem">Ulm, Baden-Württemberg — your new city 🏰</p>
-  <div style="border-radius:12px; overflow:hidden; border:0.5px solid #e0e0e0; height:420px;">
-    <iframe width="100%" height="100%" frameborder="0" scrolling="no"
-      src="https://www.openstreetmap.org/export/embed.html?bbox=9.9108%2C48.3784%2C10.0708%2C48.4184&layer=mapnik&marker=48.3984%2C9.9908"
-      style="display:block;"></iframe>
+  <div id="ulm-map" style="border-radius:12px; border:0.5px solid #e0e0e0; height:420px;"></div>
+  <div style="display:flex; gap:1rem; margin-top:0.75rem; font-size:13px; color:#888; flex-wrap:wrap;">
+    <span>🍺 Bar Anoa</span>
+    <span>☕ Café Gustaff</span>
+    <span>🏰 Ulm Münster</span>
   </div>
-  <p style="margin-top:0.75rem; font-size:13px; color:#aaa; text-align:center;">
-    <a href="https://www.openstreetmap.org/?mlat=48.3984&mlon=9.9908#map=14/48.3984/9.9908" target="_blank" style="color:#aaa;">Ver mapa más grande ↗</a>
-  </p>
 </div>
 
 <div id="book" class="panel">
@@ -187,6 +186,7 @@ input, textarea { width: 100%; margin-bottom: 12px; padding: 8px 12px; border-ra
   </div>
 </div>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 // ── Pizza Catch Game ──────────────────────────────────────────────
 var gameResize;
@@ -198,7 +198,11 @@ var gameResize;
   const msgEl = document.getElementById('g-msg');
   const btn = document.getElementById('g-btn');
 
-  const FLAGS = ['🇮🇹', '🇪🇸', '🇩🇪', '🇰🇷', '🍕', '☕'];
+  const ITEMS = [
+    {e:'🇮🇹'},{e:'🇪🇸'},{e:'🇩🇪'},{e:'🇰🇷'},
+    {e:'🍕'},{e:'☕'},{e:'🍜'},{e:'🥨'},
+    {e:'🦠',deadly:true},{e:'🦠',deadly:true}
+  ];
   let W, H, paddleX, score, lives, pizzas, speed, raf, running, spawnTimer, spawnInterval;
   const PADDLE_W_RATIO = 0.28;
   const PADDLE_H = 52;
@@ -222,7 +226,11 @@ var gameResize;
     ctx.clearRect(0, 0, W, H);
     ctx.font = `${PIZZA_SIZE * 1.5}px serif`;
     ctx.textAlign = 'center';
-    ctx.fillText('🇮🇹 🇪🇸 🇩🇪 🇰🇷', W / 2, H / 2 - 10);
+    ctx.fillText('🍕 🍜 🥨 ☕', W / 2, H / 2 - 10);
+    ctx.font = `${PIZZA_SIZE}px serif`;
+    ctx.fillStyle = '#aaa';
+    ctx.fillText('avoid 🦠', W / 2, H / 2 + 28);
+    ctx.fillStyle = '#1a1a1a';
   }
 
   window.startGame = function() {
@@ -230,7 +238,7 @@ var gameResize;
     if (raf) cancelAnimationFrame(raf);
     clearTimeout(spawnTimer);
     paddleX = W / 2 - paddleW() / 2;
-    score = 0; lives = 3; pizzas = []; speed = H * 0.003; spawnInterval = 1600;
+    score = 0; lives = 3; pizzas = []; speed = H * 0.007; spawnInterval = 1000;
     scoreEl.textContent = 0;
     livesEl.textContent = '❤️❤️❤️';
     msgEl.textContent = '';
@@ -243,8 +251,9 @@ var gameResize;
   function schedulePizza() {
     if (!running) return;
     spawnTimer = setTimeout(() => {
-      pizzas.push({ x: Math.random() * (W - PIZZA_SIZE), y: -PIZZA_SIZE, wobble: (Math.random() - 0.5) * 0.8, emoji: FLAGS[Math.floor(Math.random() * FLAGS.length)] });
-      spawnInterval = Math.max(700, spawnInterval - 18);
+      const item = ITEMS[Math.floor(Math.random() * ITEMS.length)];
+      pizzas.push({ x: Math.random() * (W - PIZZA_SIZE), y: -PIZZA_SIZE, wobble: (Math.random() - 0.5) * 0.9, emoji: item.e, deadly: !!item.deadly });
+      spawnInterval = Math.max(400, spawnInterval - 22);
       schedulePizza();
     }, spawnInterval);
   }
@@ -317,9 +326,10 @@ var gameResize;
       if (p.y + PIZZA_SIZE >= py && p.y + PIZZA_SIZE <= py + PADDLE_H + speed + 4 &&
           p.x + PIZZA_SIZE * 0.7 > paddleX && p.x + PIZZA_SIZE * 0.3 < paddleX + pw) {
         pizzas.splice(i, 1);
+        if (p.deadly) { lives = 0; livesEl.textContent = '💀'; gameOver(); return; }
         score++;
         scoreEl.textContent = score;
-        speed = Math.min(speed + H * 0.00013, H * 0.022);
+        speed = Math.min(speed + H * 0.0005, H * 0.045);
         continue;
       }
 
@@ -370,12 +380,25 @@ var gameResize;
 })();
 // ─────────────────────────────────────────────────────────────────
 
+var ulmMapInit = false;
+function initUlmMap() {
+  if (ulmMapInit) return;
+  ulmMapInit = true;
+  var m = L.map('ulm-map').setView([48.3984, 9.9908], 15);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+  }).addTo(m);
+  L.marker([48.3984, 9.9908]).addTo(m).bindPopup('<b>Ulm Münster</b> 🏰<br>Your city');
+  L.marker([48.3978, 9.9942]).addTo(m).bindPopup('<b>Bar Anoa</b> 🍺');
+  L.marker([48.3994, 9.9862]).addTo(m).bindPopup('<b>Café Gustaff</b> ☕');
+}
 function show(id, e) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   e.target.classList.add('active');
   if (id === 'game' && typeof gameResize === 'function') gameResize();
+  if (id === 'map') initUlmMap();
 }
 function daysUntil(month, day) {
   const now = new Date();
@@ -491,11 +514,13 @@ holidays.forEach(h => {
     const note = document.getElementById('cal-note').value.trim();
     const d = new Date(selDate + 'T12:00:00');
     const label = d.toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long'});
+    const subject = encodeURIComponent('📅 Date request: ' + label);
+    const body = encodeURIComponent('Hey Cons!\n\nI want to book a date with you:\n\n📅 ' + label + '\n⏰ ' + selTime + (note ? '\n💬 ' + note : '') + '\n\nCon amor, Elena 🌿');
+    window.location.href = 'mailto:constanzacmadrid1@gmail.com?subject=' + subject + '&body=' + body;
     document.getElementById('cal-note-section').style.display = 'none';
     document.getElementById('cal-times').style.display = 'none';
-    const confirm = document.getElementById('cal-confirm');
     document.getElementById('cal-confirm-text').textContent = label + ' · ' + selTime + (note ? ' · "' + note + '"' : '');
-    confirm.style.display = 'block';
+    document.getElementById('cal-confirm').style.display = 'block';
   };
 
   window.calPrev = function() {
