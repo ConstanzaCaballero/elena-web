@@ -303,10 +303,12 @@ var gameResize;
 
       if (p.y > H + 10) {
         pizzas.splice(i, 1);
-        lives--;
-        const hearts = ['', '❤️', '❤️❤️', '❤️❤️❤️'];
-        livesEl.textContent = lives > 0 ? hearts[lives] : '💔';
-        if (lives <= 0) { gameOver(); return; }
+        if (!p.deadly) {
+          lives--;
+          const hearts = ['', '❤️', '❤️❤️', '❤️❤️❤️'];
+          livesEl.textContent = lives > 0 ? hearts[lives] : '💔';
+          if (lives <= 0) { gameOver(); return; }
+        }
       }
     }
 
