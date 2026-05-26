@@ -180,7 +180,7 @@ var gameResize;
     {e:'🧲',magnet:true},{e:'🧲',magnet:true},
     {e:'🌈',rainbow:true},{e:'🌈',rainbow:true}
   ];
-  let W, H, paddleX, score, lives, pizzas, shots, speed, raf, running, spawnTimer, spawnInterval, girlCount;
+  let W, H, paddleX, score, totalCaught, lives, pizzas, shots, speed, raf, running, spawnTimer, spawnInterval, girlCount;
   let darkUntil = 0, shakeUntil = 0, cloudUntil = 0, shrinkUntil = 0, growUntil = 0;
   let gradUntil = 0, mountainUntil = 0, slowUntil = 0, magnetUntil = 0, rainbowUntil = 0;
   const GIRL_W = 0.075;
@@ -218,7 +218,7 @@ var gameResize;
     clearTimeout(spawnTimer);
     girlCount = 1;
     paddleX = W / 2 - paddleW() / 2;
-    score = 0; lives = 3; pizzas = []; shots = []; speed = H * 0.007; spawnInterval = 1000;
+    score = 0; totalCaught = 0; lives = 3; pizzas = []; shots = []; speed = H * 0.007; spawnInterval = 1000;
     darkUntil = 0; shakeUntil = 0; cloudUntil = 0; shrinkUntil = 0; growUntil = 0;
     gradUntil = 0; mountainUntil = 0; slowUntil = 0; magnetUntil = 0; rainbowUntil = 0;
     scoreEl.textContent = 0;
@@ -377,6 +377,7 @@ var gameResize;
 
       if (caught) {
         pizzas.splice(i, 1);
+        totalCaught++;
         if (p.deadly) {
           lives = 0; livesEl.textContent = '💀'; if (isShaking) ctx.restore(); gameOver(); return;
         } else if (p.pigeon) {
@@ -475,8 +476,8 @@ var gameResize;
     ctx.fillText('Game over!', W / 2, H / 2 - 18);
     ctx.font = '16px sans-serif';
     ctx.fillStyle = '#666';
-    ctx.fillText('Atrapaste ' + score + (score !== 1 ? ' cosas' : ' cosa') + '!', W / 2, H / 2 + 14);
-    msgEl.textContent = score >= 25 ? '🏆 Embajadora honoraria!' : score >= 12 ? 'No está nada mal!' : 'Otra vez — Elena puede con todo.';
+    ctx.fillText('Atrapaste ' + totalCaught + (totalCaught !== 1 ? ' cosas' : ' cosa') + '!', W / 2, H / 2 + 14);
+    msgEl.textContent = totalCaught >= 60 ? '🏆 Embajadora honoraria!' : totalCaught >= 30 ? 'No está nada mal!' : 'Otra vez — Elena puede con todo.';
     btn.textContent = 'Play again';
   }
 
