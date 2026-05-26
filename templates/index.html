@@ -39,6 +39,8 @@ input, textarea { width: 100%; margin-bottom: 12px; padding: 8px 12px; border-ra
   <button class="tab" onclick="show('contact', event)">Write to me</button>
   <button class="tab" onclick="show('game', event)">🎮 Game</button>
   <button class="tab" onclick="show('song', event)">🎵 Song</button>
+  <button class="tab" onclick="show('map', event)">📍 Ulm</button>
+  <button class="tab" onclick="show('book', event)">📅 Book a date</button>
 </div>
 
 <div id="letter" class="panel active">
@@ -105,7 +107,7 @@ input, textarea { width: 100%; margin-bottom: 12px; padding: 8px 12px; border-ra
     <button class="send-btn" id="g-btn" onclick="startGame()">Start</button>
   </div>
   <canvas id="g-canvas" style="border-radius:12px; border:0.5px solid #e0e0e0; background:#fff; display:block; width:100%; touch-action:none;"></canvas>
-  <div id="g-msg" style="text-align:center; margin-top:1rem; font-size:15px; color:#888;">Mueve a las chicas y atrapa todas las banderas 🇮🇹🇪🇸🇩🇪</div>
+  <div id="g-msg" style="text-align:center; margin-top:1rem; font-size:15px; color:#888;">Mueve a las chicas y atrapa todo 🇮🇹🇪🇸🇩🇪🇰🇷🍕☕</div>
 </div>
 
 <div id="song" class="panel">
@@ -147,6 +149,44 @@ input, textarea { width: 100%; margin-bottom: 12px; padding: 8px 12px; border-ra
   </div>
 </div>
 
+<div id="map" class="panel">
+  <p class="muted" style="margin-bottom:1rem">Ulm, Baden-Württemberg — your new city 🏰</p>
+  <div style="border-radius:12px; overflow:hidden; border:0.5px solid #e0e0e0; height:420px;">
+    <iframe width="100%" height="100%" frameborder="0" scrolling="no"
+      src="https://www.openstreetmap.org/export/embed.html?bbox=9.9108%2C48.3784%2C10.0708%2C48.4184&layer=mapnik&marker=48.3984%2C9.9908"
+      style="display:block;"></iframe>
+  </div>
+  <p style="margin-top:0.75rem; font-size:13px; color:#aaa; text-align:center;">
+    <a href="https://www.openstreetmap.org/?mlat=48.3984&mlon=9.9908#map=14/48.3984/9.9908" target="_blank" style="color:#aaa;">Ver mapa más grande ↗</a>
+  </p>
+</div>
+
+<div id="book" class="panel">
+  <div class="card">
+    <p style="font-size:15px; font-weight:500; margin-bottom:0.25rem">Book a date with Constanza</p>
+    <p class="muted" style="margin-bottom:1.25rem">Pick a day and she'll make it happen. 🌿</p>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+      <button class="send-btn" onclick="calPrev()">‹</button>
+      <span id="cal-title" style="font-weight:500; font-size:15px;"></span>
+      <button class="send-btn" onclick="calNext()">›</button>
+    </div>
+    <div id="cal-grid" style="display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:1rem;"></div>
+    <div id="cal-times" style="display:none; margin-bottom:1rem;">
+      <p class="label" style="margin-bottom:8px;">Pick a time</p>
+      <div style="display:flex; flex-wrap:wrap; gap:8px;" id="cal-time-btns"></div>
+    </div>
+    <div id="cal-note-section" style="display:none;">
+      <label class="label">Any note?</label>
+      <textarea id="cal-note" rows="3" placeholder="e.g. Let's cook, go for a walk, watch something..."></textarea>
+      <button class="send-btn" onclick="submitBooking()">Send request 🌿</button>
+    </div>
+    <div id="cal-confirm" style="display:none; padding:1rem; background:#f0fdf4; border-radius:8px; text-align:center;">
+      <p style="font-size:15px; font-weight:500; color:#1e7e34;">✓ Request sent to Constanza!</p>
+      <p id="cal-confirm-text" class="muted" style="margin-top:4px;"></p>
+    </div>
+  </div>
+</div>
+
 <script>
 // ── Pizza Catch Game ──────────────────────────────────────────────
 var gameResize;
@@ -158,7 +198,7 @@ var gameResize;
   const msgEl = document.getElementById('g-msg');
   const btn = document.getElementById('g-btn');
 
-  const FLAGS = ['🇮🇹', '🇪🇸', '🇩🇪'];
+  const FLAGS = ['🇮🇹', '🇪🇸', '🇩🇪', '🇰🇷', '🍕', '☕'];
   let W, H, paddleX, score, lives, pizzas, speed, raf, running, spawnTimer, spawnInterval;
   const PADDLE_W_RATIO = 0.28;
   const PADDLE_H = 52;
@@ -182,7 +222,7 @@ var gameResize;
     ctx.clearRect(0, 0, W, H);
     ctx.font = `${PIZZA_SIZE * 1.5}px serif`;
     ctx.textAlign = 'center';
-    ctx.fillText('🇮🇹 🇪🇸 🇩🇪', W / 2, H / 2 - 10);
+    ctx.fillText('🇮🇹 🇪🇸 🇩🇪 🇰🇷', W / 2, H / 2 - 10);
   }
 
   window.startGame = function() {
@@ -279,7 +319,7 @@ var gameResize;
         pizzas.splice(i, 1);
         score++;
         scoreEl.textContent = score;
-        if (score % 8 === 0) speed = Math.min(speed * 1.18, H * 0.018);
+        speed = Math.min(speed + H * 0.00013, H * 0.022);
         continue;
       }
 
@@ -303,11 +343,11 @@ var gameResize;
     ctx.fillStyle = '#1a1a1a';
     ctx.textAlign = 'center';
     ctx.font = 'bold 22px sans-serif';
-    ctx.fillText('Game over 🇮🇹🇪🇸🇩🇪', W / 2, H / 2 - 18);
+    ctx.fillText('Game over!', W / 2, H / 2 - 18);
     ctx.font = '16px sans-serif';
     ctx.fillStyle = '#666';
-    ctx.fillText('Atrapaste ' + score + ' bandera' + (score !== 1 ? 's' : '') + '!', W / 2, H / 2 + 14);
-    msgEl.textContent = score >= 20 ? '🏆 Embajadora honoraria!' : score >= 10 ? 'No está nada mal!' : 'Otra vez — Elena puede con todo.';
+    ctx.fillText('Atrapaste ' + score + (score !== 1 ? ' cosas' : ' cosa') + '!', W / 2, H / 2 + 14);
+    msgEl.textContent = score >= 25 ? '🏆 Embajadora honoraria!' : score >= 12 ? 'No está nada mal!' : 'Otra vez — Elena puede con todo.';
     btn.textContent = 'Play again';
   }
 
@@ -376,6 +416,104 @@ holidays.forEach(h => {
   row.innerHTML = `<span>${h.name} ${isSpecial ? '<span class="badge badge-special">special</span>' : ''}</span><span style="display:flex;gap:8px;align-items:center"><span class="muted">${d.toLocaleDateString('en-DE',{day:'numeric',month:'short'})}</span>${!isPast?'<span class="badge">'+days+'d</span>':''}</span>`;
   list.appendChild(row);
 });
+
+// ── Booking Calendar ──────────────────────────────────────────────
+(function() {
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const DAYS = ['Mo','Tu','We','Th','Fr','Sa','Su'];
+  const TIMES = ['Morning ☀️','Afternoon 🌤','Evening 🌙','Whenever works 🌿'];
+  let calYear, calMonth, selDate, selTime;
+
+  function initCal() {
+    const d = new Date();
+    calYear = d.getFullYear();
+    calMonth = d.getMonth();
+    renderCal();
+  }
+
+  function renderCal() {
+    document.getElementById('cal-title').textContent = MONTHS[calMonth] + ' ' + calYear;
+    const grid = document.getElementById('cal-grid');
+    grid.innerHTML = '';
+    DAYS.forEach(function(d) {
+      const el = document.createElement('div');
+      el.style.cssText = 'text-align:center;font-size:11px;color:#bbb;padding:4px 0;font-weight:500;';
+      el.textContent = d;
+      grid.appendChild(el);
+    });
+    const firstDay = new Date(calYear, calMonth, 1);
+    const startOffset = (firstDay.getDay() + 6) % 7;
+    const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+    const today = new Date(); today.setHours(0,0,0,0);
+    for (let i = 0; i < startOffset; i++) grid.appendChild(document.createElement('div'));
+    for (let d = 1; d <= daysInMonth; d++) {
+      const date = new Date(calYear, calMonth, d);
+      const isPast = date < today;
+      const ds = calYear + '-' + String(calMonth+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+      const isSel = selDate === ds;
+      const btn = document.createElement('button');
+      btn.textContent = d;
+      btn.style.cssText = 'border:0.5px solid ' + (isSel?'#1a1a1a':'#eee') + ';background:' + (isSel?'#1a1a1a':'white') + ';color:' + (isSel?'white':isPast?'#ddd':'#1a1a1a') + ';border-radius:6px;padding:7px 2px;font-size:13px;cursor:' + (isPast?'default':'pointer') + ';width:100%;';
+      if (!isPast) btn.onclick = (function(s){ return function(){ selectDate(s); }; })(ds);
+      grid.appendChild(btn);
+    }
+  }
+
+  function selectDate(ds) {
+    selDate = ds; selTime = null;
+    renderCal();
+    document.getElementById('cal-confirm').style.display = 'none';
+    document.getElementById('cal-note-section').style.display = 'none';
+    const timesDiv = document.getElementById('cal-times');
+    timesDiv.style.display = 'block';
+    const btns = document.getElementById('cal-time-btns');
+    btns.innerHTML = '';
+    TIMES.forEach(function(t) {
+      const b = document.createElement('button');
+      b.className = 'send-btn';
+      b.textContent = t;
+      b.onclick = function() { selectTime(t, btns, b); };
+      btns.appendChild(b);
+    });
+  }
+
+  function selectTime(t, btns, btn) {
+    selTime = t;
+    btns.querySelectorAll('button').forEach(function(b) {
+      b.style.background = 'transparent'; b.style.color = '#666'; b.style.borderColor = '#ccc';
+    });
+    btn.style.background = '#1a1a1a'; btn.style.color = 'white'; btn.style.borderColor = '#1a1a1a';
+    document.getElementById('cal-note-section').style.display = 'block';
+  }
+
+  window.submitBooking = function() {
+    if (!selDate || !selTime) return;
+    const note = document.getElementById('cal-note').value.trim();
+    const d = new Date(selDate + 'T12:00:00');
+    const label = d.toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long'});
+    document.getElementById('cal-note-section').style.display = 'none';
+    document.getElementById('cal-times').style.display = 'none';
+    const confirm = document.getElementById('cal-confirm');
+    document.getElementById('cal-confirm-text').textContent = label + ' · ' + selTime + (note ? ' · "' + note + '"' : '');
+    confirm.style.display = 'block';
+  };
+
+  window.calPrev = function() {
+    calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; }
+    selDate = null;
+    ['cal-times','cal-note-section','cal-confirm'].forEach(function(id){ document.getElementById(id).style.display='none'; });
+    renderCal();
+  };
+  window.calNext = function() {
+    calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; }
+    selDate = null;
+    ['cal-times','cal-note-section','cal-confirm'].forEach(function(id){ document.getElementById(id).style.display='none'; });
+    renderCal();
+  };
+
+  initCal();
+})();
+// ─────────────────────────────────────────────────────────────────
 </script>
 </body>
 </html>
