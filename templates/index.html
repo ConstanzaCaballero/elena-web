@@ -167,7 +167,7 @@ var gameResize;
     {e:'🍕'},{e:'☕'},{e:'🍜'},{e:'🥨'},
     {e:'🦠',deadly:true},{e:'🦠',deadly:true},
     {e:'🐦',pigeon:true},{e:'🐦',pigeon:true},
-    {e:'❤️',heart:true}
+    {e:'❤️',heart:true},{e:'❤️',heart:true},{e:'❤️',heart:true}
   ];
   let W, H, paddleX, score, lives, pizzas, speed, raf, running, spawnTimer, spawnInterval, girlCount;
   const GIRL_W = 0.075;
@@ -319,7 +319,7 @@ var gameResize;
 
       if (p.y > H + 10) {
         pizzas.splice(i, 1);
-        if (!p.deadly) {
+        if (!p.deadly && !p.pigeon && !p.heart) {
           lives--;
           const hearts = ['', '❤️', '❤️❤️', '❤️❤️❤️'];
           livesEl.textContent = lives > 0 ? hearts[lives] : '💔';
