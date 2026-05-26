@@ -354,7 +354,7 @@ var gameResize;
       p.y += (speed + score * 0.012) * speedMult;
       p.x += p.wobble * speedMult;
       p.x = Math.max(0, Math.min(W - PIZZA_SIZE, p.x));
-      if (now < magnetUntil) {
+      if (now < magnetUntil && !p.deadly && !p.pigeon) {
         const targetX = paddleX + pw / 2 - PIZZA_SIZE / 2;
         p.x += (targetX - p.x) * 0.08;
       }
