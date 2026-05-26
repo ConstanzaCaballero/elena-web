@@ -40,7 +40,6 @@ input, textarea { width: 100%; margin-bottom: 12px; padding: 8px 12px; border-ra
   <button class="tab" onclick="show('game', event)">🎮 Game</button>
   <button class="tab" onclick="show('song', event)">🎵 Song</button>
   <button class="tab" onclick="show('map', event)">📍 Ulm</button>
-  <button class="tab" onclick="show('book', event)">📅 Book a date</button>
 </div>
 
 <div id="letter" class="panel active">
@@ -150,31 +149,6 @@ input, textarea { width: 100%; margin-bottom: 12px; padding: 8px 12px; border-ra
   </div>
 </div>
 
-<div id="book" class="panel">
-  <div class="card">
-    <p style="font-size:15px; font-weight:500; margin-bottom:0.25rem">Book a date with Constanza</p>
-    <p class="muted" style="margin-bottom:1.25rem">Pick a day and she'll make it happen. 🌿</p>
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
-      <button class="send-btn" onclick="calPrev()">‹</button>
-      <span id="cal-title" style="font-weight:500; font-size:15px;"></span>
-      <button class="send-btn" onclick="calNext()">›</button>
-    </div>
-    <div id="cal-grid" style="display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:1rem;"></div>
-    <div id="cal-times" style="display:none; margin-bottom:1rem;">
-      <p class="label" style="margin-bottom:8px;">Pick a time</p>
-      <div style="display:flex; flex-wrap:wrap; gap:8px;" id="cal-time-btns"></div>
-    </div>
-    <div id="cal-note-section" style="display:none;">
-      <label class="label">Any note?</label>
-      <textarea id="cal-note" rows="3" placeholder="e.g. Let's cook, go for a walk, watch something..."></textarea>
-      <button class="send-btn" onclick="submitBooking()">Send request 🌿</button>
-    </div>
-    <div id="cal-confirm" style="display:none; padding:1rem; background:#f0fdf4; border-radius:8px; text-align:center;">
-      <p style="font-size:15px; font-weight:500; color:#1e7e34;">✓ Request sent to Constanza!</p>
-      <p id="cal-confirm-text" class="muted" style="margin-top:4px;"></p>
-    </div>
-  </div>
-</div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
@@ -434,104 +408,6 @@ holidays.forEach(h => {
   list.appendChild(row);
 });
 
-// ── Booking Calendar ──────────────────────────────────────────────
-(function() {
-  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  const DAYS = ['Mo','Tu','We','Th','Fr','Sa','Su'];
-  const TIMES = ['Morning ☀️','Afternoon 🌤','Evening 🌙','Whenever works 🌿'];
-  let calYear, calMonth, selDate, selTime;
-
-  function initCal() {
-    const d = new Date();
-    calYear = d.getFullYear();
-    calMonth = d.getMonth();
-    renderCal();
-  }
-
-  function renderCal() {
-    document.getElementById('cal-title').textContent = MONTHS[calMonth] + ' ' + calYear;
-    const grid = document.getElementById('cal-grid');
-    grid.innerHTML = '';
-    DAYS.forEach(function(d) {
-      const el = document.createElement('div');
-      el.style.cssText = 'text-align:center;font-size:11px;color:#bbb;padding:4px 0;font-weight:500;';
-      el.textContent = d;
-      grid.appendChild(el);
-    });
-    const firstDay = new Date(calYear, calMonth, 1);
-    const startOffset = (firstDay.getDay() + 6) % 7;
-    const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
-    const today = new Date(); today.setHours(0,0,0,0);
-    for (let i = 0; i < startOffset; i++) grid.appendChild(document.createElement('div'));
-    for (let d = 1; d <= daysInMonth; d++) {
-      const date = new Date(calYear, calMonth, d);
-      const isPast = date < today;
-      const ds = calYear + '-' + String(calMonth+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
-      const isSel = selDate === ds;
-      const btn = document.createElement('button');
-      btn.textContent = d;
-      btn.style.cssText = 'border:0.5px solid ' + (isSel?'#1a1a1a':'#eee') + ';background:' + (isSel?'#1a1a1a':'white') + ';color:' + (isSel?'white':isPast?'#ddd':'#1a1a1a') + ';border-radius:6px;padding:7px 2px;font-size:13px;cursor:' + (isPast?'default':'pointer') + ';width:100%;';
-      if (!isPast) btn.onclick = (function(s){ return function(){ selectDate(s); }; })(ds);
-      grid.appendChild(btn);
-    }
-  }
-
-  function selectDate(ds) {
-    selDate = ds; selTime = null;
-    renderCal();
-    document.getElementById('cal-confirm').style.display = 'none';
-    document.getElementById('cal-note-section').style.display = 'none';
-    const timesDiv = document.getElementById('cal-times');
-    timesDiv.style.display = 'block';
-    const btns = document.getElementById('cal-time-btns');
-    btns.innerHTML = '';
-    TIMES.forEach(function(t) {
-      const b = document.createElement('button');
-      b.className = 'send-btn';
-      b.textContent = t;
-      b.onclick = function() { selectTime(t, btns, b); };
-      btns.appendChild(b);
-    });
-  }
-
-  function selectTime(t, btns, btn) {
-    selTime = t;
-    btns.querySelectorAll('button').forEach(function(b) {
-      b.style.background = 'transparent'; b.style.color = '#666'; b.style.borderColor = '#ccc';
-    });
-    btn.style.background = '#1a1a1a'; btn.style.color = 'white'; btn.style.borderColor = '#1a1a1a';
-    document.getElementById('cal-note-section').style.display = 'block';
-  }
-
-  window.submitBooking = function() {
-    if (!selDate || !selTime) return;
-    const note = document.getElementById('cal-note').value.trim();
-    const d = new Date(selDate + 'T12:00:00');
-    const label = d.toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long'});
-    const subject = encodeURIComponent('📅 Date request: ' + label);
-    const body = encodeURIComponent('Hey Cons!\n\nI want to book a date with you:\n\n📅 ' + label + '\n⏰ ' + selTime + (note ? '\n💬 ' + note : '') + '\n\nCon amor, Elena 🌿');
-    window.location.href = 'mailto:constanzacmadrid1@gmail.com?subject=' + subject + '&body=' + body;
-    document.getElementById('cal-note-section').style.display = 'none';
-    document.getElementById('cal-times').style.display = 'none';
-    document.getElementById('cal-confirm-text').textContent = label + ' · ' + selTime + (note ? ' · "' + note + '"' : '');
-    document.getElementById('cal-confirm').style.display = 'block';
-  };
-
-  window.calPrev = function() {
-    calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; }
-    selDate = null;
-    ['cal-times','cal-note-section','cal-confirm'].forEach(function(id){ document.getElementById(id).style.display='none'; });
-    renderCal();
-  };
-  window.calNext = function() {
-    calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; }
-    selDate = null;
-    ['cal-times','cal-note-section','cal-confirm'].forEach(function(id){ document.getElementById(id).style.display='none'; });
-    renderCal();
-  };
-
-  initCal();
-})();
 // ─────────────────────────────────────────────────────────────────
 </script>
 </body>
