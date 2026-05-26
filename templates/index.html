@@ -166,7 +166,8 @@ var gameResize;
     {e:'🇮🇹'},{e:'🇪🇸'},{e:'🇩🇪'},{e:'🇰🇷'},
     {e:'🍕'},{e:'☕'},{e:'🍜'},{e:'🥨'},
     {e:'🦠',deadly:true},{e:'🦠',deadly:true},
-    {e:'🐦',pigeon:true},{e:'🐦',pigeon:true}
+    {e:'🐦',pigeon:true},{e:'🐦',pigeon:true},
+    {e:'❤️',heart:true}
   ];
   let W, H, paddleX, score, lives, pizzas, speed, raf, running, spawnTimer, spawnInterval, girlCount;
   const GIRL_W = 0.075;
@@ -218,7 +219,7 @@ var gameResize;
     if (!running) return;
     spawnTimer = setTimeout(() => {
       const item = ITEMS[Math.floor(Math.random() * ITEMS.length)];
-      pizzas.push({ x: Math.random() * (W - PIZZA_SIZE), y: -PIZZA_SIZE, wobble: (Math.random() - 0.5) * 0.9, emoji: item.e, deadly: !!item.deadly, pigeon: !!item.pigeon });
+      pizzas.push({ x: Math.random() * (W - PIZZA_SIZE), y: -PIZZA_SIZE, wobble: (Math.random() - 0.5) * 0.9, emoji: item.e, deadly: !!item.deadly, pigeon: !!item.pigeon, heart: !!item.heart });
       spawnInterval = Math.max(400, spawnInterval - 22);
       schedulePizza();
     }, spawnInterval);
@@ -292,6 +293,13 @@ var gameResize;
           p.x + PIZZA_SIZE * 0.7 > paddleX && p.x + PIZZA_SIZE * 0.3 < paddleX + pw) {
         pizzas.splice(i, 1);
         if (p.deadly) { lives = 0; livesEl.textContent = '💀'; gameOver(); return; }
+        if (p.heart) {
+          pizzas.splice(i, 1);
+          lives = Math.min(lives + 1, 3);
+          const hearts = ['', '❤️', '❤️❤️', '❤️❤️❤️'];
+          livesEl.textContent = hearts[lives];
+          continue;
+        }
         if (p.pigeon) {
           pizzas.splice(i, 1);
           girlCount--;
